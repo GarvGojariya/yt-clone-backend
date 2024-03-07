@@ -217,4 +217,75 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword } = await req.body;
+    console.log(req.user);
+    const user = await User.findById(req.user?._id);
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+    if (!isPasswordCorrect) {
+        throw new ApiError(401, "Old password is incorrect.");
+    }
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                {},
+                "Your current password has been changed successfully."
+            )
+        );
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res
+        .status(200)
+        .json(new ApiResponse(200, req.user, "current user fetch sucessfully"));
+});
+
+const updateProfile = asyncHandler(async (req, res) => {
+    const { email, fullName } = req.body;
+
+    if (!(fullName || email)) {
+        throw new ApiError(
+            400,
+            "Please provide at least one field to be updated."
+        );
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                email,
+                fullName,
+            },
+        },
+        { new: true } //return the new updated user object
+    ).select("-password -refreshToken");
+    if (!user) {
+        throw new ApiError(404, "No user found with this id.");
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                user,
+                "User account details have been updated!"
+            )
+        );
+});
+export {
+    registerUser,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    changeCurrentPassword,
+    getCurrentUser,
+    updateProfile
+};
