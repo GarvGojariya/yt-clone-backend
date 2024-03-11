@@ -4,5 +4,7 @@
     "trailingComma":"es5",
     "semi":true,
     "singleQuote":false,
-    "jsxSingleQuote": false
+    "jsxSingleQuote": false,
+    "proseWrap":"preserve",
+    "arrowParens":"always"
 }
