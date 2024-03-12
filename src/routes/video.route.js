@@ -28,4 +28,11 @@ router.route("/upload-video").post(
     publishAVideo
 );
 router.route("/v/:videoId").get(getVideoById);
+router
+    .route("/update-video/:videoId")
+    .patch(upload.single("thumbnail"), updateVideo);
+router.route("/delete-video/:videoId").delete(deleteVideo);
+router.route("/toggle-video/:videoId").post(togglePublishStatus);
+router.route("/getVideo").post(getAllVideos);
+
 export default router;
