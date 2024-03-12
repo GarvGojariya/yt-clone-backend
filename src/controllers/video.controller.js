@@ -14,7 +14,9 @@ const getAllVideos = asyncHandler(async (req, res) => {
     if (!userId) {
         throw new ApiError(400, "please provide userId");
     }
-
+    if (!isValidObjectId(userId)) {
+        throw new ApiError(400, "Invalid userId provided");
+    }
     const pipline = [];
     if (userId) {
         await User.findById(userId);

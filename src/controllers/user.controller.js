@@ -13,7 +13,7 @@ const registerUser = asyncHandler(async (req, res) => {
             (field) => field.trim() === ""
         )
     ) {
-        throw new ApiError(400,"any field cannot be empty" );
+        throw new ApiError(400, "any field cannot be empty");
     }
 
     const existedUser = await User.findOne({
@@ -39,13 +39,13 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     if (!avatarLocalPath) {
-        throw new ApiError(422,"Avatar is required");
+        throw new ApiError(422, "Avatar is required");
     }
     const avatar = await uploadOnCloudinary(avatarLocalPath);
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);
 
     if (!avatar) {
-        throw new ApiError(422,"Failed to upload image");
+        throw new ApiError(422, "Failed to upload image");
     }
 
     const user = await User.create({
@@ -62,7 +62,7 @@ const registerUser = asyncHandler(async (req, res) => {
     );
 
     if (!createdUser) {
-        throw new ApiError(500,"User registration failed");
+        throw new ApiError(500, "User registration failed");
     }
 
     return res
@@ -83,7 +83,7 @@ const generateAccessAndRefreshToken = async (userId) => {
 
         return { accessToken, refreshToken };
     } catch (error) {
-        throw new ApiError(500,"Somehing went wrong while creating tokens");
+        throw new ApiError(500, "Somehing went wrong while creating tokens");
     }
 };
 
