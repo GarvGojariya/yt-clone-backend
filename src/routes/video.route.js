@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
     deleteVideo,
+    getAllPublicVideos,
     getAllVideos,
     getVideoById,
     publishAVideo,
@@ -11,9 +12,10 @@ import { varifyJwt } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
+router.route("/all-video").get(getAllPublicVideos);
 router.use(varifyJwt); // Apply varifyJwt middleware to all routes in this file
 
-router.route("/upload-video").post(
+router.route("/").post(
     varifyJwt,
     upload.fields([
         {

@@ -17,17 +17,17 @@ const getAllVideos = asyncHandler(async (req, res) => {
     if (!isValidObjectId(userId)) {
         throw new ApiError(400, "Invalid userId provided");
     }
-    const pipline = [];
+    const pipeline = [];
     if (userId) {
         await User.findById(userId);
-        pipline.push({
+        pipeline.push({
             $match: {
                 owner: new mongoose.Types.ObjectId(userId),
             },
         });
     }
     if (query) {
-        pipline.push({
+        pipeline.push({
             $match: {
                 $or: [
                     { title: { $regex: query, $options: "i" } },
@@ -38,14 +38,47 @@ const getAllVideos = asyncHandler(async (req, res) => {
     }
     const sortTypeValue = sortType === "desc" ? -1 : 1;
     if (sortBy) {
-        pipline.push({
+        pipeline.push({
             $sort: {
                 [sortBy]: sortTypeValue,
             },
         });
     }
 
-    const videos = await Video.aggregate(pipline);
+    const videos = await Video.aggregate(pipeline);
+    const paginatedVideos = await paginate(page, limit, videos);
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, paginatedVideos, "Videos fetched successfully")
+        );
+});
+
+const getAllPublicVideos = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10, query, sortBy, sortType } = req.query;
+    //TODO: get all videos based on query, sort, pagination
+
+    const pipeline = [];
+    if (query) {
+        pipeline.push({
+            $match: {
+                $or: [
+                    { title: { $regex: query, $options: "i" } },
+                    { description: { $regex: query, $options: "i" } },
+                ],
+            },
+        });
+    }
+    const sortTypeValue = sortType === "desc" ? -1 : 1;
+    if (sortBy) {
+        pipeline.push({
+            $sort: {
+                [sortBy]: sortTypeValue,
+            },
+        });
+    }
+
+    const videos = await Video.aggregate(pipeline);
     const paginatedVideos = await paginate(page, limit, videos);
     return res
         .status(200)
@@ -198,4 +231,5 @@ export {
     updateVideo,
     deleteVideo,
     togglePublishStatus,
+    getAllPublicVideos,
 };

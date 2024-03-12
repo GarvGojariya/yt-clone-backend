@@ -100,7 +100,7 @@ const loginUser = asyncHandler(async (req, res) => {
     const { userName, password, email } = req.body;
 
     if (!(userName || email)) {
-        throw new ApiError(400, "Invalid credentials");
+        throw new ApiError(400, "any field can not be empty");
     }
 
     const user = await User.findOne({
