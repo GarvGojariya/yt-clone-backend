@@ -10,10 +10,10 @@ const router = Router();
 router.use(varifyJwt); // Apply varifyJwt middleware to all routes in this file
 
 router
-    .route("/c/:subscriberId")
-    .get(getSubscribedChannels)
+    .route("/c/:channelId")
+    .get(getUserChannelSubscribers)
     .post(toggleSubscription);
 
-router.route("/u/:channelId").get(getUserChannelSubscribers);
+router.route("/u/:subscriberId").get(getSubscribedChannels);
 
 export default router;
