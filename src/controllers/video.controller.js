@@ -224,6 +224,65 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
         );
 });
 
+const addVideoToWatchHistory = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+    //TODO: add video to watch history
+    if (!videoId) {
+        throw new ApiError(400, "Please provide a videoId");
+    }
+    const video = await Video.findById(videoId);
+    if (!video) {
+        throw new ApiError(400, "Video not found");
+    }
+    const user = await User.findById(req.user._id);
+    if (!user) {
+        throw new ApiError(400, "User not found");
+    }
+    if (user.watchHistory.includes(videoId)) {
+        throw new ApiError(400, "Video already in watch history");
+    }
+    user.watchHistory.push(video);
+    const updatedUser = await user.save();
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                updatedUser,
+                "Video added to watch history successfully"
+            )
+        );
+});
+
+const removeVideoFromWatchHistory = asyncHandler(async (req, res) => {
+    const { videoId } = req.params;
+    //TODO: remove video from watch history
+    if (!videoId) {
+        throw new ApiError(400, "Please provide a videoId");
+    }
+    const video = await Video.findById(videoId);
+    if (!video) {
+        throw new ApiError(400, "Video not found");
+    }
+    const user = await User.findById(req.user._id);
+    if (!user) {
+        throw new ApiError(400, "User not found");
+    }
+    if (!user.watchHistory.includes(videoId)) {
+        throw new ApiError(400, "Video not in watch history");
+    }
+    user.watchHistory.splice(user.watchHistory.indexOf(video), 1);
+    const updatedUser = await user.save();
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                updatedUser,
+                "Video removed from watch history successfully"
+            )
+        );
+});
 export {
     getAllVideos,
     publishAVideo,
@@ -232,4 +291,6 @@ export {
     deleteVideo,
     togglePublishStatus,
     getAllPublicVideos,
+    addVideoToWatchHistory,
+    removeVideoFromWatchHistory,
 };

@@ -23,7 +23,9 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
     });
     if (alreadyLiked.length > 0 && alreadyLiked) {
         await Like.findOneAndDelete(alreadyLiked, { new: true });
-        return res.status(200).json(new ApiResponse(200, null, "Disliked"));
+        return res
+            .status(200)
+            .json(new ApiResponse(200, alreadyLiked, "Disliked"));
     }
     const like = await Like.create({
         video: videoId,
@@ -160,10 +162,42 @@ const getLikedTweets = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, likedTweets, "Liked Tweets"));
 });
+
+const getVideoLikeCount = asyncHandler(async (req, res) => {
+    // TODO: Count likes of video
+    const { videoId } = req.params;
+    if (!videoId) {
+        throw new ApiError(400, "Please provide a videoId");
+    }
+    const video = await Video.findById(videoId);
+    if (!video) {
+        throw new ApiError(400, "Video not found");
+    }
+    const likeCount = await Like.aggregate([
+        {
+            $match: {
+                video: new mongoose.Types.ObjectId(videoId),
+            },
+        },
+        {
+            $group: {
+                _id: "$video",
+                likeCount: { $sum: 1 },
+            },
+        },
+    ]);
+    if (!likeCount) {
+        throw new ApiError(500, "Unable to get video like count");
+    }
+    return res
+        .status(200)
+        .json(new ApiResponse(200, likeCount, "Video Like Count"));
+});
 export {
     toggleCommentLike,
     toggleTweetLike,
     toggleVideoLike,
     getLikedVideos,
     getLikedTweets,
+    getVideoLikeCount,
 };

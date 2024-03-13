@@ -1,10 +1,12 @@
 import { Router } from "express";
 import {
+    addVideoToWatchHistory,
     deleteVideo,
     getAllPublicVideos,
     getAllVideos,
     getVideoById,
     publishAVideo,
+    removeVideoFromWatchHistory,
     togglePublishStatus,
     updateVideo,
 } from "../controllers/video.controller.js";
@@ -36,5 +38,6 @@ router
 router.route("/delete-video/:videoId").delete(deleteVideo);
 router.route("/toggle-video/:videoId").post(togglePublishStatus);
 router.route("/getVideo").post(getAllVideos);
-
+router.route("/history/:videoId").post(addVideoToWatchHistory);
+router.route("/history/:videoId").delete(removeVideoFromWatchHistory);
 export default router;
