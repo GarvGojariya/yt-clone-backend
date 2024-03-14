@@ -7,8 +7,8 @@ const iv = crypto.randomBytes(16);
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     auth: {
-        user: "garvgojariya@gmail.com",
-        pass: "noun jnwg zyqe sowk",
+        user: process.env.EMAIL,
+        pass: process.env.APP_PASSWORD,
     },
     port: 587,
     secure: false,

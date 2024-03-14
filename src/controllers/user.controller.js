@@ -5,14 +5,12 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import bcrypt from "bcrypt";
 import {
     decrypt,
     generateEncryptedVarifyLink,
     sendEmailWithVarifyLink,
 } from "../utils/auth.js";
 import dayjs from "dayjs";
-import fs from "fs";
 
 const registerUser = asyncHandler(async (req, res) => {
     const { fullName, userName, email, password } = req.body;
