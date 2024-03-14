@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken'
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 const userSchema = new Schema(
     {
         userName: {
@@ -9,24 +9,24 @@ const userSchema = new Schema(
             unique: true,
             trim: true,
             lowercase: true,
-            index: true // indexes the field for faster search
+            index: true, // indexes the field for faster search
         },
         email: {
             type: String,
             required: true,
             unique: true,
             trim: true,
-            lowercase: true
+            lowercase: true,
         },
         fullName: {
             type: String,
             trim: true,
             required: true,
-            index: true
+            index: true,
         },
         avatar: {
             type: String, //cloudenery url or any other store url
-            required: true
+            required: true,
         },
         coverImage: {
             type: String, //cloudenery url or any other store url
@@ -34,61 +34,73 @@ const userSchema = new Schema(
         watchHistory: [
             {
                 type: mongoose.Types.ObjectId,
-                ref: "Video"
-            }
+                ref: "Video",
+            },
         ],
         password: {
             type: String,
-            required: [true, "Why no password?"]
+            required: [true, "Why no password?"],
         },
         refreshToken: {
             type: String,
-        }
-    }, {
-    timestamps: true // Saves createdAt and updatedAt as dates. Creates them in ISO 8601 format yyy
-}
+        },
+        isVarified: {
+            type: Boolean,
+            default: false,
+        },
+    },
+    {
+        timestamps: true, // Saves createdAt and updatedAt as dates. Creates them in ISO 8601 format yyy
+    }
 );
 
-//encrypt password before save to data base 
+//encrypt password before save to data base
 //pre is mongoose hooks , it will call this function before saving the data
-userSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) return next();
+userSchema.pre("save", async function (next) {
+    if (!this.isModified("password")) return next();
     this.password = await bcrypt.hash(this.password, 10);
-    next()
+    next();
 });
 
-//varification of password for login 
+userSchema.pre("findOneAndUpdate", async function (next) {
+    if (!this._update.$set.password) return next();
+    this._update.$set.password = await bcrypt.hash(
+        this._update.$set.password,
+        10
+    );
+    next();
+});
+//varification of password for login
 userSchema.methods.isPasswordCorrect = async function (password) {
-    return await bcrypt.compare(password, this.password)
+    return await bcrypt.compare(password, this.password);
 };
 
-//generate access token 
+//generate access token
 userSchema.methods.generateAccessToken = function () {
-
     return jwt.sign(
         {
             _id: this._id,
             email: this.email,
             userName: this.userName,
-            fullName: this.fullName
+            fullName: this.fullName,
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY
-        },
-    )
-}
+            expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+        }
+    );
+};
 
 //generate refresh token
 userSchema.methods.generateRefreshToken = function () {
     return jwt.sign(
         {
-            _id: this._id
+            _id: this._id,
         },
         process.env.REFRESH_TOKEN_SECRET,
         {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRY
-        },
-    )
-}
-export const User = mongoose.model('User', userSchema);
+            expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+        }
+    );
+};
+export const User = mongoose.model("User", userSchema);

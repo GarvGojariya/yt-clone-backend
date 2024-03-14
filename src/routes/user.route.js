@@ -4,13 +4,13 @@ import {
     getCurrentUser,
     getUserChannelProfile,
     getUserWatchHistory,
+    getVarificationLink,
     loginUser,
     logoutUser,
     refreshAccessToken,
     registerUser,
-    updateAvatarImage,
-    updateCoverImage,
     updateProfile,
+    varifyUser,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { varifyJwt } from "../middlewares/auth.middleware.js";
@@ -38,18 +38,36 @@ router.route("/logout").post(varifyJwt, logoutUser);
 router.route("/refresh-token").post(refreshAccessToken);
 router.route("/change-password").post(varifyJwt, changeCurrentPassword);
 router.route("/get-current-user").get(varifyJwt, getCurrentUser);
-router.route("/update-profile").patch(varifyJwt, updateProfile);
-router.route("/update-avatar").patch(
+router.route("/update-profile").patch(
     varifyJwt,
-    upload.single("avatar"), //for single fields
-    updateAvatarImage
+    upload.fields([
+        {
+            name: "avatar",
+            maxCount: 1,
+        },
+        {
+            name: "coverImage",
+            maxCount: 1,
+        },
+    ]),
+    // upload.single("avatar"),
+    updateProfile
 );
-router.route("/update-coverimage").patch(
-    varifyJwt,
-    upload.single("coverImage"), //for single field
-    updateCoverImage
-);
+
 router.route("/c/:username").get(varifyJwt, getUserChannelProfile);
 router.route("/watch-history").get(varifyJwt, getUserWatchHistory);
-
+router.route("/web/verify/:iv/:token").get(varifyUser);
+router.route("/web/verification").get(
+    upload.fields([
+        {
+            name: "avatar",
+            maxCount: 1,
+        },
+        {
+            name: "coverImage",
+            maxCount: 1,
+        },
+    ]),
+    getVarificationLink
+);
 export default router;

@@ -5,6 +5,14 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
+import {
+    decrypt,
+    generateEncryptedVarifyLink,
+    sendEmailWithVarifyLink,
+} from "../utils/auth.js";
+import dayjs from "dayjs";
+import fs from "fs";
 
 const registerUser = asyncHandler(async (req, res) => {
     const { fullName, userName, email, password } = req.body;
@@ -21,13 +29,15 @@ const registerUser = asyncHandler(async (req, res) => {
             $or: [{ userName }, { email }],
         });
 
-        if (existedUser) {
+        if (existedUser && existedUser.isVarified) {
             throw new ApiError(
-                "Username or Email has already exist please login",
-                409
+                409,
+                "Username or Email has already exist please login"
             );
         }
-
+        if (!req.files?.avatar) {
+            throw new ApiError(422, "Avatar is required");
+        }
         const avatarLocalPath = req.files?.avatar[0]?.path;
         let coverImageLocalPath;
 
@@ -49,6 +59,51 @@ const registerUser = asyncHandler(async (req, res) => {
             throw new ApiError(422, "Failed to upload image");
         }
 
+        if (existedUser && !existedUser.isVarified) {
+            try {
+                // const hashedPassword = await bcrypt.hash(password, 10);
+                const user = await User.findOneAndUpdate(
+                    { _id: existedUser._id },
+                    {
+                        $set: {
+                            fullName,
+                            avatar: avatar.url,
+                            coverImage: coverImage
+                                ? coverImage.url
+                                : existedUser.coverImage,
+                            password,
+                        },
+                    },
+                    { new: true }
+                ).select("-password -refreshtoken");
+                if (!user) {
+                    throw new ApiError(400, "User not found");
+                }
+                if (user) {
+                    const token = await generateEncryptedVarifyLink(user);
+                    const link = `${process.env.BASE_URL_FOR_WEB}/verify/${token.iv}/${token.encryptedData}`;
+                    sendEmailWithVarifyLink(
+                        user.email,
+                        link,
+                        "Click the following link to complete your registration",
+                        "Registration Confirmation"
+                    );
+                } else {
+                    return { success: false, message: "Error in sending mail" };
+                }
+                return res
+                    .status(201)
+                    .json(
+                        new ApiResponse(
+                            201,
+                            "User registered successfully please varify the user by clicking link from mail.",
+                            user
+                        )
+                    );
+            } catch (error) {
+                throw new ApiError(500, "existingUser registration failed");
+            }
+        }
         const user = await User.create({
             userName: userName.toLowerCase(),
             fullName,
@@ -65,7 +120,18 @@ const registerUser = asyncHandler(async (req, res) => {
         if (!createdUser) {
             throw new ApiError(500, "User registration failed");
         }
-
+        if (createdUser) {
+            const token = await generateEncryptedVarifyLink(createdUser);
+            const link = `${process.env.BASE_URL_FOR_WEB}/verify/${token.iv}/${token.encryptedData}`;
+            sendEmailWithVarifyLink(
+                createdUser.email,
+                link,
+                "Click the following link to complete your registration",
+                "Registration Confirmation"
+            );
+        } else {
+            return { success: false, message: "Error in sending mail" };
+        }
         return res
             .status(201)
             .json(
@@ -109,7 +175,6 @@ const loginUser = asyncHandler(async (req, res) => {
     // send response
 
     const { userName, password, email } = req.body;
-
     try {
         if (!(userName || email)) {
             throw new ApiError(400, "any field can not be empty");
@@ -129,6 +194,9 @@ const loginUser = asyncHandler(async (req, res) => {
             throw new ApiError(401, "Invalid  password");
         }
 
+        if (!user.isVarified) {
+            throw new ApiError(401, "Please verify your account before login.");
+        }
         // create tokens
         const { accessToken, refreshToken } =
             await generateAccessAndRefreshToken(user._id);
@@ -288,22 +356,30 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 const updateProfile = asyncHandler(async (req, res) => {
-    const { email, fullName } = req.body;
-
+    const { fullName, userName } = req.body;
     try {
-        if (!(fullName || email)) {
+        const avatarLocalPath = req.files?.avatar && req.files?.avatar[0]?.path;
+        const coverImageLocalPath =
+            req.files?.coverImage && req.files?.coverImage[0]?.path;
+        const avatar = await uploadOnCloudinary(avatarLocalPath);
+        const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+        const isUserNameExist = await User.find({ userName });
+        if (isUserNameExist.length > 0) {
             throw new ApiError(
                 400,
-                "Please provide at least one field to be updated."
+                "User name is already taken please try something else."
             );
         }
-
         const user = await User.findByIdAndUpdate(
             req.user?._id,
             {
                 $set: {
-                    email,
                     fullName,
+                    userName,
+                    avatar: avatar ? avatar.url : req.user.avatar,
+                    coverImage: coverImage
+                        ? coverImage.url
+                        : req.user.coverImage,
                 },
             },
             { new: true } //return the new updated user object
@@ -321,62 +397,6 @@ const updateProfile = asyncHandler(async (req, res) => {
                     "User account details have been updated!"
                 )
             );
-    } catch (error) {
-        throw new ApiError(
-            error.status || 500,
-            error.message || "Something went wrong"
-        );
-    }
-});
-
-const updateAvatarImage = asyncHandler(async (req, res) => {
-    const avatarLocalPath = req.file?.path;
-    try {
-        if (!avatarLocalPath) {
-            throw new ApiError(400, "No image provided!");
-        }
-        const avatar = await uploadOnCloudinary(avatarLocalPath);
-        if (!avatar.url) {
-            throw new ApiError(400, "Failed to save Image on Cloudinary");
-        }
-
-        const user = await User.findByIdAndUpdate(
-            req.user?._id,
-            { $set: { avatar: avatar.url } },
-            { new: true }
-        ).select("-password");
-
-        return res
-            .status(200)
-            .json(new ApiResponse(200, user, "Avatar has been updated!"));
-    } catch (error) {
-        throw new ApiError(
-            error.status || 500,
-            error.message || "Something went wrong"
-        );
-    }
-});
-
-const updateCoverImage = asyncHandler(async (req, res) => {
-    const coverImageLocalPath = req.file?.path;
-    try {
-        if (!coverImageLocalPath) {
-            throw new ApiError(400, "No image provided!");
-        }
-        const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-        if (!coverImage.url) {
-            throw new ApiError(400, "Failed to save Image on Cloudinary");
-        }
-
-        const user = await User.findByIdAndUpdate(
-            req.user?._id,
-            { $set: { coverImage: coverImage.url } },
-            { new: true }
-        ).select("-password");
-
-        return res
-            .status(200)
-            .json(new ApiResponse(200, user, "Cover Image has been updated!"));
     } catch (error) {
         throw new ApiError(
             error.status || 500,
@@ -530,6 +550,76 @@ const getUserWatchHistory = asyncHandler(async (req, res) => {
         );
     }
 });
+
+const varifyUser = asyncHandler(async (req, res) => {
+    const iv = req.params.iv;
+    const encryptedData = req.params.token;
+    const token = {
+        iv,
+        encryptedData,
+    };
+    let decryptedContent = await decrypt(token);
+    let data = JSON.parse(decryptedContent);
+    const diffInMinutes = dayjs().diff(data.expireIn, "minute");
+    if (data.id && diffInMinutes <= process.env.LINK_EXPIRE_TIME) {
+        try {
+            const user = await User.findById(data.id);
+            if (user) {
+                user.isVarified = true;
+                await user.save();
+                return res
+                    .status(200)
+                    .json(
+                        new ApiResponse(
+                            200,
+                            {},
+                            "Successfully verified the user"
+                        )
+                    );
+            }
+            if (!user) {
+                throw new ApiError(404, "User not found");
+            }
+        } catch (error) {
+            throw new ApiError(
+                error.status || 500,
+                error.message || "Varification failed"
+            );
+        }
+    }
+});
+
+const getVarificationLink = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        throw new ApiError(400, "Email is required!");
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+        throw new ApiError(400, "User not found!");
+    }
+    if (user) {
+        const token = await generateEncryptedVarifyLink(user);
+        const link = `${process.env.BASE_URL_FOR_WEB}/verify/${token.iv}/${token.encryptedData}`;
+        sendEmailWithVarifyLink(
+            user.email,
+            link,
+            "Click the following link to complete your registration",
+            "Registration Confirmation"
+        );
+    } else {
+        throw new ApiError(400, "Failed to send email!");
+    }
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                {},
+                "Verification link has been sent to your email"
+            )
+        );
+});
 export {
     registerUser,
     loginUser,
@@ -538,8 +628,8 @@ export {
     changeCurrentPassword,
     getCurrentUser,
     updateProfile,
-    updateAvatarImage,
-    updateCoverImage,
     getUserChannelProfile,
     getUserWatchHistory,
+    varifyUser,
+    getVarificationLink,
 };
