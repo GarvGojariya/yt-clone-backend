@@ -9,13 +9,15 @@ import {
     removeVideoFromWatchHistory,
     togglePublishStatus,
     updateVideo,
+    uploadLargeVideo,
 } from "../controllers/video.controller.js";
 import { varifyJwt } from "../middlewares/auth.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 router.route("/all-video").get(getAllPublicVideos);
-router.use(varifyJwt); // Apply varifyJwt middleware to all routes in this file
+router.route("/v/upload").post(upload.single("video"), uploadLargeVideo);
+// router.use(varifyJwt); // Apply varifyJwt middleware to all routes in this file
 
 router.route("/").post(
     varifyJwt,
@@ -40,4 +42,5 @@ router.route("/toggle-video/:videoId").post(togglePublishStatus);
 router.route("/getVideo").post(getAllVideos);
 router.route("/history/:videoId").post(addVideoToWatchHistory);
 router.route("/history/:videoId").delete(removeVideoFromWatchHistory);
+
 export default router;

@@ -50,8 +50,11 @@ const registerUser = asyncHandler(async (req, res) => {
         if (!avatarLocalPath) {
             throw new ApiError(422, "Avatar is required");
         }
-        const avatar = await uploadOnCloudinary(avatarLocalPath);
-        const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+        const avatar = await uploadOnCloudinary(avatarLocalPath, "/avatars");
+        const coverImage = await uploadOnCloudinary(
+            coverImageLocalPath,
+            "/coverImages"
+        );
 
         if (!avatar) {
             throw new ApiError(422, "Failed to upload image");
@@ -167,7 +170,7 @@ const loginUser = asyncHandler(async (req, res) => {
     // validate data
     // username or email
     // find user
-    //  check password
+    // check password
     // access and refresh token
     // send cookie
     // send response
@@ -186,10 +189,9 @@ const loginUser = asyncHandler(async (req, res) => {
             throw new ApiError(401, "User does not exist");
         }
 
-        const isPasswordValid = user.isPasswordCorrect(password);
-
+        const isPasswordValid = await user.isPasswordCorrect(password);
         if (!isPasswordValid) {
-            throw new ApiError(401, "Invalid  password");
+            throw new ApiError(401, "Invalid password");
         }
 
         if (!user.isVarified) {
@@ -618,6 +620,78 @@ const getVarificationLink = asyncHandler(async (req, res) => {
             )
         );
 });
+
+const forgotPassword = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        throw new ApiError(400, "Email is required!");
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+        throw new ApiError(400, "User not found!");
+    }
+    if (user) {
+        const token = await generateEncryptedVarifyLink(user);
+        const link = `${process.env.BASE_URL_FOR_WEB}/reset-password/${token.iv}/${token.encryptedData}`;
+        sendEmailWithVarifyLink(
+            user.email,
+            link,
+            "Click the following link to reset your password",
+            "Password Reset"
+        );
+    } else {
+        throw new ApiError(400, "Failed to send email!");
+    }
+    return res.status(200).json({
+        status: 200,
+        message: "Password reset link has been sent to your email",
+    });
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+    const { password, confirmPassword } = req.body;
+    const { iv, encryptedData } = req.params;
+    if (!password) {
+        throw new ApiError(400, "Password is required!");
+    }
+    if (!password === confirmPassword) {
+        throw new ApiError(400, "Passwords do not match!");
+    }
+    const token = {
+        iv,
+        encryptedData,
+    };
+    let decryptedContent = await decrypt(token);
+    let data = JSON.parse(decryptedContent);
+    const diffInMinutes = dayjs().diff(data.expireIn, "minute");
+    if (data.id && diffInMinutes <= process.env.LINK_EXPIRE_TIME) {
+        try {
+            const user = await User.findOneAndUpdate(
+                { _id: data.id },
+                { $set: { password } },
+                { new: true }
+            );
+            if (!user) {
+                throw new ApiError(404, "User not found");
+            }
+
+            return res
+                .status(200)
+                .json(
+                    new ApiResponse(
+                        200,
+                        user,
+                        "Successfully reset the password"
+                    )
+                );
+        } catch (error) {
+            throw new ApiError(
+                error.status || 500,
+                error.message || "Password reset failed"
+            );
+        }
+    }
+});
 export {
     registerUser,
     loginUser,
@@ -630,4 +704,6 @@ export {
     getUserWatchHistory,
     varifyUser,
     getVarificationLink,
+    resetPassword,
+    forgotPassword,
 };

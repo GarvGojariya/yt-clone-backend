@@ -4,7 +4,10 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+    uploadOnCloudinary,
+    uploadVideoOnCloudinary,
+} from "../utils/cloudinary.js";
 import { paginate } from "../utils/paginate.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -124,11 +127,14 @@ const publishAVideo = asyncHandler(async (req, res) => {
         if (!thumbnailLocalPath) {
             throw new ApiError(400, "Please provide a thumbnail");
         }
-        const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+        const thumbnail = await uploadOnCloudinary(
+            thumbnailLocalPath,
+            "/thumbnails"
+        );
         if (!thumbnail) {
             throw new ApiError(400, "Thumbnail upload failed");
         }
-        const video = await uploadOnCloudinary(videoLocalPath);
+        const video = await uploadOnCloudinary(videoLocalPath, "/videos");
         if (!video) {
             throw new ApiError(400, "Video upload failed");
         }
@@ -187,7 +193,10 @@ const updateVideo = asyncHandler(async (req, res) => {
     const thumbnailLocalPath = req.file?.path;
     //TODO: update video details like title, description, thumbnail
     try {
-        const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+        const thumbnail = await uploadOnCloudinary(
+            thumbnailLocalPath,
+            "/thumbnails"
+        );
         if (!videoId) {
             throw new ApiError(400, "Please provide a videoId");
         }
@@ -362,6 +371,29 @@ const removeVideoFromWatchHistory = asyncHandler(async (req, res) => {
         );
     }
 });
+
+const uploadLargeVideo = asyncHandler(async (req, res) => {
+    try {
+        console.log("video", req.file);
+        const videoLocalPath = req.file.path;
+        // console.log("req", req.file);
+        if (!videoLocalPath) {
+            throw new ApiError(400, "Please provide a video");
+        }
+        try {
+            const video = await uploadVideoOnCloudinary(videoLocalPath);
+            console.log({ video });
+        } catch (error) {
+            console.log("video not upload error", error);
+        }
+    } catch (error) {
+        console.log("main catch", error);
+    }
+    // if (!video) {
+    //     throw new ApiError(400, "Video upload failed");
+    // }
+    // console.log(video);
+});
 export {
     getAllVideos,
     publishAVideo,
@@ -372,4 +404,5 @@ export {
     getAllPublicVideos,
     addVideoToWatchHistory,
     removeVideoFromWatchHistory,
+    uploadLargeVideo,
 };

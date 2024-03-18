@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
     changeCurrentPassword,
+    forgotPassword,
     getCurrentUser,
     getUserChannelProfile,
     getUserWatchHistory,
@@ -9,6 +10,7 @@ import {
     logoutUser,
     refreshAccessToken,
     registerUser,
+    resetPassword,
     updateProfile,
     varifyUser,
 } from "../controllers/user.controller.js";
@@ -70,4 +72,6 @@ router.route("/web/verification").get(
     ]),
     getVarificationLink
 );
+router.route("/web/forgot-password").get(forgotPassword);
+router.route("/web/reset-password/:iv/:encryptedData").post(resetPassword);
 export default router;

@@ -67,7 +67,7 @@ const sendEmailWithVarifyLink = async (email, link, text, subject) => {
     };
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-            console.log(error);
+            throw new error();
         } else {
         }
     });
