@@ -23,6 +23,7 @@ import commentRouter from "./routes/comment.route.js";
 import likeRouter from "./routes/like.route.js";
 import playlistRouter from "./routes/playlist.route.js";
 import dashboardRouter from "./routes/dashboard.route.js";
+import { ApiError } from "./utils/ApiError.js";
 //route declaration
 
 app.use("/api/v1/users", userRouter);
@@ -33,4 +34,20 @@ app.use("/api/v1/comments", commentRouter);
 app.use("/api/v1/likes", likeRouter);
 app.use("/api/v1/playlist", playlistRouter);
 app.use("/api/v1/dashboard", dashboardRouter);
+
+app.use((err, req, res, next) => {
+    if (err instanceof ApiError) {
+      // Handle custom ApiError
+      return res.status(err.statusCode || 500).json({
+        success: err.success,
+        message: err.message,
+        errors: err.errors,
+      });
+    }
+  
+    return res.status(500).json({
+      success: false,
+      message: 'Internal Server Error',
+    });
+  });
 export { app };
