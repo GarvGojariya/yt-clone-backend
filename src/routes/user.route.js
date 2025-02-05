@@ -58,7 +58,7 @@ router.route("/update-profile").patch(
 
 router.route("/c/:username").get(varifyJwt, getUserChannelProfile);
 router.route("/watch-history").get(varifyJwt, getUserWatchHistory);
-router.route("/web/verify/:iv/:token").get(varifyUser);
+router.route("/web/verify/:iv/:token").post(varifyUser);
 router.route("/web/verification").get(
     upload.fields([
         {

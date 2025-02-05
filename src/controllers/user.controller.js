@@ -97,8 +97,8 @@ const registerUser = asyncHandler(async (req, res) => {
                     .json(
                         new ApiResponse(
                             201,
+                            user,
                             "User registered successfully please varify the user by clicking link from mail.",
-                            user
                         )
                     );
             } catch (error) {
@@ -138,8 +138,8 @@ const registerUser = asyncHandler(async (req, res) => {
             .json(
                 new ApiResponse(
                     201,
+                    createdUser,
                     "User registered successfully",
-                    createdUser
                 )
             );
     } catch (error) {
@@ -552,8 +552,12 @@ const getUserWatchHistory = asyncHandler(async (req, res) => {
 });
 
 const varifyUser = asyncHandler(async (req, res) => {
+    
+    
     const iv = req.params.iv;
     const encryptedData = req.params.token;
+    console.log("🚀 ~ varifyUser ~ iv:", iv)
+    console.log("🚀 ~ varifyUser ~ encryptedData:", encryptedData)
     const token = {
         iv,
         encryptedData,
@@ -561,9 +565,11 @@ const varifyUser = asyncHandler(async (req, res) => {
     let decryptedContent = await decrypt(token);
     let data = JSON.parse(decryptedContent);
     const diffInMinutes = dayjs().diff(data.expireIn, "minute");
+    console.log("🚀 ~ varifyUser ~ diffInMinutes:", diffInMinutes)
     if (data.id && diffInMinutes <= process.env.LINK_EXPIRE_TIME) {
         try {
             const user = await User.findById(data.id);
+            console.log("🚀 ~ varifyUser ~ user:", user)
             if (user) {
                 user.isVarified = true;
                 await user.save();
@@ -581,11 +587,22 @@ const varifyUser = asyncHandler(async (req, res) => {
                 throw new ApiError(404, "User not found");
             }
         } catch (error) {
+            console.log("🚀 ~ varifyUser ~ error:", error)
             throw new ApiError(
                 error.status || 500,
                 error.message || "Varification failed"
             );
         }
+    }else{
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                {},
+                "Link expired"
+            )
+        );
     }
 });
 
