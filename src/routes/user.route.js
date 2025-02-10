@@ -72,6 +72,6 @@ router.route("/web/verification").get(
     ]),
     getVarificationLink
 );
-router.route("/web/forgot-password").get(forgotPassword);
+router.route("/web/forgot-password").post(forgotPassword);
 router.route("/web/reset-password/:iv/:encryptedData").post(resetPassword);
 export default router;

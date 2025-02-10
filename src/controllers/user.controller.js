@@ -98,7 +98,7 @@ const registerUser = asyncHandler(async (req, res) => {
                         new ApiResponse(
                             201,
                             user,
-                            "User registered successfully please varify the user by clicking link from mail.",
+                            "User registered successfully please varify the user by clicking link from mail."
                         )
                     );
             } catch (error) {
@@ -139,7 +139,7 @@ const registerUser = asyncHandler(async (req, res) => {
                 new ApiResponse(
                     201,
                     createdUser,
-                    "User registered successfully",
+                    "User registered successfully"
                 )
             );
     } catch (error) {
@@ -342,11 +342,10 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 
 const getCurrentUser = asyncHandler(async (req, res) => {
     try {
+        const user = await User.findById(req.user?._id).select("-password");
         return res
             .status(200)
-            .json(
-                new ApiResponse(200, req.user, "current user fetch sucessfully")
-            );
+            .json(new ApiResponse(200, user, "current user fetch sucessfully"));
     } catch (error) {
         throw new ApiError(
             error.status || 500,
@@ -552,12 +551,10 @@ const getUserWatchHistory = asyncHandler(async (req, res) => {
 });
 
 const varifyUser = asyncHandler(async (req, res) => {
-    
-    
     const iv = req.params.iv;
     const encryptedData = req.params.token;
-    console.log("🚀 ~ varifyUser ~ iv:", iv)
-    console.log("🚀 ~ varifyUser ~ encryptedData:", encryptedData)
+    console.log("🚀 ~ varifyUser ~ iv:", iv);
+    console.log("🚀 ~ varifyUser ~ encryptedData:", encryptedData);
     const token = {
         iv,
         encryptedData,
@@ -565,11 +562,11 @@ const varifyUser = asyncHandler(async (req, res) => {
     let decryptedContent = await decrypt(token);
     let data = JSON.parse(decryptedContent);
     const diffInMinutes = dayjs().diff(data.expireIn, "minute");
-    console.log("🚀 ~ varifyUser ~ diffInMinutes:", diffInMinutes)
+    console.log("🚀 ~ varifyUser ~ diffInMinutes:", diffInMinutes);
     if (data.id && diffInMinutes <= process.env.LINK_EXPIRE_TIME) {
         try {
             const user = await User.findById(data.id);
-            console.log("🚀 ~ varifyUser ~ user:", user)
+            console.log("🚀 ~ varifyUser ~ user:", user);
             if (user) {
                 user.isVarified = true;
                 await user.save();
@@ -587,22 +584,14 @@ const varifyUser = asyncHandler(async (req, res) => {
                 throw new ApiError(404, "User not found");
             }
         } catch (error) {
-            console.log("🚀 ~ varifyUser ~ error:", error)
+            console.log("🚀 ~ varifyUser ~ error:", error);
             throw new ApiError(
                 error.status || 500,
                 error.message || "Varification failed"
             );
         }
-    }else{
-        return res
-        .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                {},
-                "Link expired"
-            )
-        );
+    } else {
+        return res.status(200).json(new ApiResponse(200, {}, "Link expired"));
     }
 });
 
@@ -707,6 +696,8 @@ const resetPassword = asyncHandler(async (req, res) => {
                 error.message || "Password reset failed"
             );
         }
+    } else {
+        throw new ApiError(400, "Link expired");
     }
 });
 export {

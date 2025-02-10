@@ -33,14 +33,16 @@ router.route("/").post(
     ]),
     publishAVideo
 );
-router.route("/v/:videoId").get(getVideoById);
+router.route("/v/:videoId").get(varifyJwt,getVideoById);
 router
     .route("/update-video/:videoId")
-    .patch(upload.single("thumbnail"), updateVideo);
-router.route("/delete-video/:videoId").delete(deleteVideo);
-router.route("/toggle-video/:videoId").post(togglePublishStatus);
+    .patch(varifyJwt,upload.single("thumbnail"), updateVideo);
+router.route("/delete-video/:videoId").delete(varifyJwt,deleteVideo);
+router.route("/toggle-video/:videoId").post(varifyJwt,togglePublishStatus);
 router.route("/getVideo").post(getAllVideos);
-router.route("/history/:videoId").post(addVideoToWatchHistory);
-router.route("/history/:videoId").delete(removeVideoFromWatchHistory);
+router.route("/history/:videoId").post(varifyJwt, addVideoToWatchHistory);
+router
+    .route("/history/:videoId")
+    .delete(varifyJwt, removeVideoFromWatchHistory);
 
 export default router;

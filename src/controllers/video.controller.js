@@ -9,6 +9,7 @@ import {
     uploadVideoOnCloudinary,
 } from "../utils/cloudinary.js";
 import { paginate } from "../utils/paginate.js";
+import { Like } from "../models/like.model.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
@@ -166,20 +167,45 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
-    //TODO: get video by id
+    const userId = req.user?._id; // Get the logged-in user's ID
+
     try {
         if (!videoId?.trim()) {
             throw new ApiError(400, "Please provide a videoId");
         }
-        const video = await Video.findById(videoId);
+
+        const video = await Video.findById(videoId)
+            .populate("owner", "_id userName fullName avatar coverImage email")
+            .lean();
+
         if (!video) {
             throw new ApiError(400, "Video not found");
         }
-        return res
-            .status(200)
-            .json(
-                new ApiResponse(200, video, "Successfully fetched the video")
-            );
+
+        // Get total like count
+        const likes = await Like.aggregate([
+            { $match: { video: new mongoose.Types.ObjectId(videoId) } },
+            { $group: { _id: "$video", likeCount: { $sum: 1 } } },
+        ]);
+
+        // Check if the user has liked this video
+        const userLiked = await Like.exists({
+            video: videoId,
+            likedBy: userId,
+        });
+        console.log("🚀 ~ getVideoById ~ userLiked:", userLiked)
+
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                {
+                    ...video,
+                    likeCount: likes[0]?.likeCount || 0,
+                    isLiked: !!userLiked, // true if user has liked, false otherwise
+                },
+                "Successfully fetched the video"
+            )
+        );
     } catch (error) {
         throw new ApiError(
             error.statusCode || 500,
@@ -314,7 +340,11 @@ const addVideoToWatchHistory = asyncHandler(async (req, res) => {
             throw new ApiError(400, "User not found");
         }
         if (user.watchHistory.includes(videoId)) {
-            throw new ApiError(400, "Video already in watch history");
+            return res
+                .status(200)
+                .json(
+                    new ApiResponse(200, {}, "Video already in watch history")
+                );
         }
         user.watchHistory.push(video);
         const updatedUser = await user.save();
@@ -353,7 +383,7 @@ const removeVideoFromWatchHistory = asyncHandler(async (req, res) => {
         if (!user.watchHistory.includes(videoId)) {
             throw new ApiError(400, "Video not in watch history");
         }
-        user.watchHistory.splice(user.watchHistory.indexOf(video), 1);
+        user.watchHistory.splice(user.watchHistory.indexOf(video._id), 1);
         const updatedUser = await user.save();
         return res
             .status(200)

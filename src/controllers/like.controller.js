@@ -23,7 +23,9 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
             likedBy: req.user._id,
         });
         if (alreadyLiked.length > 0 && alreadyLiked) {
-            await Like.findOneAndDelete(alreadyLiked, { new: true });
+            await Like.findByIdAndDelete(alreadyLiked[0]._id, {
+                new: true,
+            });
             return res
                 .status(200)
                 .json(new ApiResponse(200, alreadyLiked, "Disliked"));
