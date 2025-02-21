@@ -87,7 +87,93 @@ const registerUser = asyncHandler(async (req, res) => {
                         user.email,
                         link,
                         "Click the following link to complete your registration",
-                        "Registration Confirmation"
+                        "Registration Confirmation",
+                        `
+              <!DOCTYPE html>
+              <html lang="en">
+              <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Registration Confirmation</title>
+                <style>
+                  body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 0;
+                  }
+                  .email-container {
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border: 1px solid #dddddd;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                  }
+                  .header {
+                    background-color: #4CAF50;
+                    color: white;
+                    padding: 20px;
+                    text-align: center;
+                    font-size: 24px;
+                  }
+                  .content {
+                    padding: 20px;
+                  }
+                  .content h1 {
+                    font-size: 22px;
+                    color: #333333;
+                  }
+                  .content p {
+                    font-size: 16px;
+                    line-height: 1.6;
+                    color: #666666;
+                  }
+                  .content a {
+                    display: inline-block;
+                    margin-top: 20px;
+                    padding: 12px 20px;
+                    font-size: 16px;
+                    color: #ffffff;
+                    background-color: #4CAF50;
+                    text-decoration: none;
+                    border-radius: 4px;
+                  }
+                  .footer {
+                    text-align: center;
+                    padding: 10px;
+                    background-color: #f9f9f9;
+                    font-size: 12px;
+                    color: #aaaaaa;
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="email-container">
+                  <div class="header">
+                    Registration Confirmation
+                  </div>
+                  <div class="content">
+                    <h1>Hello, ${email}</h1>
+                    <p>
+                      We received a request to sign up. Click the button below to sign up. 
+                      If you did not make this request, you can ignore this email.
+                    </p>
+                    <a href="${link}" target="_blank">Confirm Registration</a>
+                    <p>
+                      If the button above does not work, copy and paste the following link into your browser:
+                    </p>
+                    <p>${link}</p>
+                  </div>
+                  <div class="footer">
+                    <p>If you have any questions, contact us at support@example.com</p>
+                    <p>&copy; 2025 Your Company. All rights reserved.</p>
+                  </div>
+                </div>
+              </body>
+              </html>
+              `
                     );
                 } else {
                     return { success: false, message: "Error in sending mail" };
@@ -128,7 +214,93 @@ const registerUser = asyncHandler(async (req, res) => {
                 createdUser.email,
                 link,
                 "Click the following link to complete your registration",
-                "Registration Confirmation"
+                "Registration Confirmation",
+                `
+              <!DOCTYPE html>
+              <html lang="en">
+              <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Registration Confirmation</title>
+                <style>
+                  body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 0;
+                  }
+                  .email-container {
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border: 1px solid #dddddd;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                  }
+                  .header {
+                    background-color: #4CAF50;
+                    color: white;
+                    padding: 20px;
+                    text-align: center;
+                    font-size: 24px;
+                  }
+                  .content {
+                    padding: 20px;
+                  }
+                  .content h1 {
+                    font-size: 22px;
+                    color: #333333;
+                  }
+                  .content p {
+                    font-size: 16px;
+                    line-height: 1.6;
+                    color: #666666;
+                  }
+                  .content a {
+                    display: inline-block;
+                    margin-top: 20px;
+                    padding: 12px 20px;
+                    font-size: 16px;
+                    color: #ffffff;
+                    background-color: #4CAF50;
+                    text-decoration: none;
+                    border-radius: 4px;
+                  }
+                  .footer {
+                    text-align: center;
+                    padding: 10px;
+                    background-color: #f9f9f9;
+                    font-size: 12px;
+                    color: #aaaaaa;
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="email-container">
+                  <div class="header">
+                    Registration Confirmation
+                  </div>
+                  <div class="content">
+                    <h1>Hello, ${email}</h1>
+                    <p>
+                      We received a request to sign up. Click the button below to sign up. 
+                      If you did not make this request, you can ignore this email.
+                    </p>
+                    <a href="${link}" target="_blank">Confirm Registration</a>
+                    <p>
+                      If the button above does not work, copy and paste the following link into your browser:
+                    </p>
+                    <p>${link}</p>
+                  </div>
+                  <div class="footer">
+                    <p>If you have any questions, contact us at support@example.com</p>
+                    <p>&copy; 2025 Your Company. All rights reserved.</p>
+                  </div>
+                </div>
+              </body>
+              </html>
+              `
             );
         } else {
             return { success: false, message: "Error in sending mail" };
@@ -611,7 +783,93 @@ const getVarificationLink = asyncHandler(async (req, res) => {
             user.email,
             link,
             "Click the following link to complete your registration",
-            "Registration Confirmation"
+            "Registration Confirmation",
+            `
+              <!DOCTYPE html>
+              <html lang="en">
+              <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Verify Email</title>
+                <style>
+                  body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 0;
+                  }
+                  .email-container {
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border: 1px solid #dddddd;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                  }
+                  .header {
+                    background-color: #4CAF50;
+                    color: white;
+                    padding: 20px;
+                    text-align: center;
+                    font-size: 24px;
+                  }
+                  .content {
+                    padding: 20px;
+                  }
+                  .content h1 {
+                    font-size: 22px;
+                    color: #333333;
+                  }
+                  .content p {
+                    font-size: 16px;
+                    line-height: 1.6;
+                    color: #666666;
+                  }
+                  .content a {
+                    display: inline-block;
+                    margin-top: 20px;
+                    padding: 12px 20px;
+                    font-size: 16px;
+                    color: #ffffff;
+                    background-color: #4CAF50;
+                    text-decoration: none;
+                    border-radius: 4px;
+                  }
+                  .footer {
+                    text-align: center;
+                    padding: 10px;
+                    background-color: #f9f9f9;
+                    font-size: 12px;
+                    color: #aaaaaa;
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="email-container">
+                  <div class="header">
+                    Verification Confirmation
+                  </div>
+                  <div class="content">
+                    <h1>Hello, ${email}</h1>
+                    <p>
+                      We received a request to verify your email. Click the button below to verify. 
+                      If you did not make this request, you can ignore this email.
+                    </p>
+                    <a href="${link}" target="_blank">Confirm Verification</a>
+                    <p>
+                      If the button above does not work, copy and paste the following link into your browser:
+                    </p>
+                    <p>${link}</p>
+                  </div>
+                  <div class="footer">
+                    <p>If you have any questions, contact us at support@example.com</p>
+                    <p>&copy; 2025 Your Company. All rights reserved.</p>
+                  </div>
+                </div>
+              </body>
+              </html>
+              `
         );
     } else {
         throw new ApiError(400, "Failed to send email!");
@@ -643,7 +901,93 @@ const forgotPassword = asyncHandler(async (req, res) => {
             user.email,
             link,
             "Click the following link to reset your password",
-            "Password Reset"
+            "Password Reset",
+            `
+              <!DOCTYPE html>
+              <html lang="en">
+              <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Reset Your Password</title>
+                <style>
+                  body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 0;
+                  }
+                  .email-container {
+                    max-width: 600px;
+                    margin: 20px auto;
+                    background-color: #ffffff;
+                    border: 1px solid #dddddd;
+                    border-radius: 8px;
+                    overflow: hidden;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                  }
+                  .header {
+                    background-color: #4CAF50;
+                    color: white;
+                    padding: 20px;
+                    text-align: center;
+                    font-size: 24px;
+                  }
+                  .content {
+                    padding: 20px;
+                  }
+                  .content h1 {
+                    font-size: 22px;
+                    color: #333333;
+                  }
+                  .content p {
+                    font-size: 16px;
+                    line-height: 1.6;
+                    color: #666666;
+                  }
+                  .content a {
+                    display: inline-block;
+                    margin-top: 20px;
+                    padding: 12px 20px;
+                    font-size: 16px;
+                    color: #ffffff;
+                    background-color: #4CAF50;
+                    text-decoration: none;
+                    border-radius: 4px;
+                  }
+                  .footer {
+                    text-align: center;
+                    padding: 10px;
+                    background-color: #f9f9f9;
+                    font-size: 12px;
+                    color: #aaaaaa;
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="email-container">
+                  <div class="header">
+                    Reset Your Password
+                  </div>
+                  <div class="content">
+                    <h1>Hello, ${email}</h1>
+                    <p>
+                      We received a request to reset your password. Click the button below to reset it. 
+                      If you did not make this request, you can ignore this email.
+                    </p>
+                    <a href="${link}" target="_blank">Reset Password</a>
+                    <p>
+                      If the button above does not work, copy and paste the following link into your browser:
+                    </p>
+                    <p>${link}</p>
+                  </div>
+                  <div class="footer">
+                    <p>If you have any questions, contact us at support@example.com</p>
+                    <p>&copy; 2025 Your Company. All rights reserved.</p>
+                  </div>
+                </div>
+              </body>
+              </html>
+              `
         );
     } else {
         throw new ApiError(400, "Failed to send email!");

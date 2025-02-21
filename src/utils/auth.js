@@ -58,12 +58,13 @@ const generateEncryptedVarifyLink = async (user) => {
     }
 };
 
-const sendEmailWithVarifyLink = async (email, link, text, subject) => {
+const sendEmailWithVarifyLink = async (email, link, text, subject, html) => {
     const mailOptions = {
         from: process.env.EMAIL,
         to: email,
         subject: subject,
         text: text + " " + link,
+        html: html,
     };
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
